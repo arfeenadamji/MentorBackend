@@ -7,8 +7,9 @@ const bcrypt = require('bcryptjs');
 
 const User = require('./models/user')
 app.use(bodyParser.json())
-// const Event = require('./models/event')
-// app.use(bodyParser.json())
+
+const Message = require('./models/message')
+app.use(bodyParser.json())
 
 const mongooseUrl = "mongodb+srv://Arfeen:abcd1234@cluster0.spvug.mongodb.net/Mentor";
 
@@ -40,10 +41,10 @@ app.post('/signUp', async (req, res) => {
     newUser.gender = req.body.gender
     newUser.userType = req.body.userType
   let user1 = newUser.skills.split(",")
-console.log('newUser', user1)
+// console.log('newUser', user1)
     newUser.save((err, doc) => {
         console.log('err from new user',err)
-        console.log('doc', doc)
+        // console.log('doc', doc)
     });
     res.send("welcome to app")
 });
@@ -68,6 +69,70 @@ app.post('/signIn', async (req, res) => {
         }
     })
 })
+
+// get User Data
+app.get('/getUser', async(req,res) =>{
+    // console.log("req body from get user", req.body)
+    await User.find().exec((err, resp) =>{
+        if(err){
+            console.log('err from get user', err)
+        }
+        else{
+            // console.log('res from get user', resp)
+            if(res > 0){
+                res.send({message:'user data exist', status:true, data:resp})
+            } else{
+                res.send({message:'user doesnot exist' , status:true, data:resp})
+            }
+        }
+    })
+})
+
+// get Message
+app.post('/getMessage', async(req, res) =>{
+    console.log('req body from get message', req.body.mentorId)
+    await Message.find({userId:req.body.userId}).populate('mentorId').exec((err, resp) =>{
+        if(err){
+            console.log('err form get message',err)
+        }
+        else{
+            let newMessage = new Message()
+            newMessage.message = req.body.message
+            newMessage.userId = req.body.userId
+            newMessage.mentorId = req.body.mentorId
+
+            newMessage.save((err, doc) =>{
+                if(err){
+                console.log('err from get message', err)
+                }
+                // else{console.log('doc from get message', doc)}
+            });
+        }
+    })
+})
+
+// getMenteesDetail
+app.post('/getMenteesDetail', async(req,res) =>{
+    console.log("req.body from get Mentees detail", req.body)
+    // let myId = req.body.userId;
+    // let query = {}
+    // if (myId) {
+    //     query = { userId: myId }
+    // }
+    // console.log('userId:req.body.userId._id', myId)
+    await Message.find({mentorId:req.body.mentorId}).populate('userId').exec((err, resp) => {
+        if (err) {
+            console.log('err finding from mentees details', err)
+        }
+        else {
+            console.log('user from mentees detail', resp)
+            if (resp.length > 0) {
+                res.send({ message: 'user exist', status: true, data: resp })
+            } else {
+                res.send({ message: 'user not found', status: false, data: resp })
+            }
+        }
+    })})
 
 
 app.listen(4000, () => {
